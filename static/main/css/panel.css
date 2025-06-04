@@ -1,0 +1,145 @@
+:root{
+    --black: rgb(33,37,41);
+    --black-highlight: rgb(50, 53, 62);
+}
+
+body{
+    overflow: hidden;
+}
+
+body .container{
+    max-width:100vw;
+    max-height:100vh;
+    width:100%;
+    height:90%;
+}
+
+body .container .container{
+    width:95vw;
+    height: 90vh;
+    border: 1px solid #000;
+}
+
+.row{
+    font-size: 20px;
+    height:100%;
+}
+
+.row .groups{
+    text-align: center;
+    margin:10px;
+    font-size:20px;
+}
+
+.row .management{
+    margin:10px;
+    border:1px solid #000;
+    text-align: center;
+}
+
+.row .groups h3{
+    margin-bottom:2em;
+}
+
+.row .groups .group-empty{
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.row .groups .group-empty .button-container{
+    display:flex;
+    justify-content: center;
+    width:100%;
+    min-width:15vw;
+    max-width:30vw;
+}
+
+.row .groups .group-empty .button-container button{
+    width:70%;
+    background-color: var(--black);
+    border: none;
+    color:#fff;
+    font-size:1em;
+    padding: 0.5em;
+    margin-top:0.5em;
+    transition: 0.2s ease-in-out;
+}
+
+.row .groups .group-empty .button-container button:hover{
+    background-color: var(--black-highlight);
+    box-shadow: inset 0px 0px 0px 5px #4e4e60;
+}
+
+.middle-form{
+    position: absolute;
+    top:15%;
+    left:35%;
+    font-size: 20px;
+    min-width:35vw;
+    max-width:70vw;
+    height:fit-content;
+    display:flex;
+    justify-content: space-between;
+    flex-direction: column;
+    background-color: var(--black);
+    color:#fff;
+    padding:1em;
+    text-align: center;
+    border-radius:10px;
+    box-shadow: 0px 10px 10px 0px #fff;
+    min-height:25vh;
+}
+
+.middle-form .form-wrapper{
+    display:flex;
+    justify-content: space-between;
+    gap: 1em;
+    font-size: 1em;
+    height:90%;
+    flex-direction: column;
+    margin-top: 0.2em;
+    text-align: left;
+}
+
+.middle-form .alert{
+    margin-bottom:-0.2em;
+    text-align: center;
+}
+.middle-form .alert.empty{
+    display:none;
+}
+
+.middle-form .form-wrapper button{
+    font-size:1em;
+    margin-top:0.5em;
+    min-width:35vw;
+}
+
+form.hide{
+    display:none;
+}
+
+.middle-form .btn-container{
+    display:flex;
+    justify-content: space-between;
+    flex-direction: row;
+}
+
+.middle-form .btn-container button{
+    min-width: 40%;
+}
+
+.list-group .list-group-item{
+    display:flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.list-group .group-add-li{
+    display:flex;
+    justify-content: center;
+}
+.list-group .list-group-item .group-status{
+    width: 5%;
+}

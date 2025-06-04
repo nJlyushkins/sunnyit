@@ -1,0 +1,74 @@
+.navbar-wrapper{
+    width:95vw;
+    padding-top: 5px;
+    padding-bottom:5px;
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    max-height:7vh;
+}
+
+nav.navbar{
+    justify-content: center;
+    align-items: center;
+    display:flex;
+    flex-direction: row;
+    font-size: 22px;
+    margin:0px;
+    z-index:0;
+}
+
+.navbar-wrapper a .logo-img{
+    padding:5px;
+    background-color:#fff;
+    border-radius:100%;
+    width: 7vh;
+}
+
+.navbar h4{
+    color:#fff;
+}
+
+.navbar .user-prof{
+    text-decoration: none;
+    color:#fff;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.navbar .user-img{
+    width: 6vh;
+    margin-left:0.2em;
+}
+
+.user-prof .user-drop-content{
+    display: none;
+    position: absolute;
+    background-color: rgb(33,37,41);
+    min-width: 160px;
+    z-index: -5;
+    transform: translateY(5vh);
+    min-height: 10vh;
+    flex-direction: column;
+    justify-content: end;
+    padding:10px;
+}
+
+.user-prof .user-drop-content a{
+    text-decoration: none;
+    color:#fff;
+    background-color: rgb(22, 26, 28);
+}
+
+.user-prof:hover .user-drop-content{
+    display: flex;
+}
+
+.user-prof .user-drop-content a:hover{
+    background-color: rgb(40, 47, 50);
+}

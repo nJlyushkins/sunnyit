@@ -1,0 +1,32 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %} Авторизация {% endblock %}
+
+{% block style %}
+    <link rel="stylesheet" type="text/css" href="{% static 'main/css/login.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container form-wrapper">
+        <h2>Авторизация</h2>
+        <form class="form-with-validation" action="login" method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="non-field-errors">
+                    {% for err in form.non_field_errors %}
+                      <p class="form-error">{{ err }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% for field in form %}
+                <div class="form-group">
+                    {{ field.errors }}
+                    {{ field.label_tag }} {{ field }}
+                </div>
+            {% endfor %}
+            <button class="btn btn-primary" type="submit" style="width:50%">Войти</button>
+        </form>
+        <span>Нет аккаунта? <a href="/signup">Регистрация</a></span>
+    </div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %} Index page {% endblock %}
+
+{% block content %}
+    <h1>Vk Bots:</h1>
+    <table class="table table-bordered">
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>On/Off</th>
+        </tr>
+        {% for id,bot in vkBots.bots.items %}
+            <tr>
+                <td>{{ id }}</td>
+                <td>{{ bot.name }}</td>
+                <td>{{ bot.running }}</td>
+                <td><a href="?action=run&id={{ id }}">{% if bot.running %} STOP {% else %} RUN {% endif %}</a></td>
+                <td><a href="?action=callback&id={{ id }}">CALL</a></td>
+            </tr>
+        {% endfor %}
+    </table>
+    
+        <div class="row">
+        <a class="btn btn-default" href="{% url 'confirm' %}">Group Confirm</a>
+        <a class="btn btn-default" href="{% url 'debug' %}">Debug Page</a>
+    </div>
+{% endblock %}
