@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 from .forms import CustomAuthenticationForm, CustomUserCreationForm
 from .models import UserBalance, CustomUser, VKGroup, ChatBot, ConfirmCode, GroupStatistics, BotStatistics
 from .utils import process_vk_event
@@ -156,7 +157,7 @@ def connect_group_ajax(request):
             confirm_code = ''.join(random.choices(string.ascii_lowercase + string.digits, k=20))
             ConfirmCode.objects.create(vk_group=vk_group, code=confirm_code)
 
-            callback_url = request.build_absolute_uri('https://sunnyit.online/vk_callback')
+            callback_url = request.build_absolute_uri('https://sunnyit.online/vk-callback')
             callback_response = vk_service.addCallbackServer(
                 group_id=group_id,
                 access_token=access_token,
@@ -277,6 +278,7 @@ def payment(request):
 def order_bot(request):
     pass
 
+@csrf_exempt
 def vk_callback(request):
     if request.method == "POST":
         data = json.loads(request.body)
