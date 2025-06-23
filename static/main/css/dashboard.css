@@ -1,0 +1,93 @@
+/* Основные цвета */
+:root {
+    --primary-bg: #e3f2fd; /* Основной цвет */
+    --accent: #0d6efd; /* Акцентный цвет */
+    --white: #ffffff; /* Дополнительный цвет */
+}
+
+.dashboard-section, .connect-group-section {
+    background-color: var(--primary-bg);
+    min-height: 100vh;
+    padding-top: 50px;
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+    background-color: var(--white);
+    transition: transform 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.balance-card .card {
+    padding: 5px;
+    font-size: 0.9rem;
+}
+
+.sidebar {
+    background-color: var(--white);
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar .list-group-item {
+    cursor: pointer;
+    margin-bottom: 5px;
+}
+
+.sidebar .list-group-item:hover {
+    background-color: var(--primary-bg);
+}
+
+.group-detail {
+    padding: 15px;
+}
+
+.btn-accent {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: var(--white);
+}
+
+.btn-accent:hover {
+    background-color: #0b5ed7;
+    border-color: #0b5ed7;
+    color: var(--white);
+}
+
+.text-accent {
+    color: var(--accent) !important;
+}
+
+.alert {
+    background-color: var(--white);
+    border-color: var(--accent);
+    color: #333;
+}
+
+.shadow {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.chart-container {
+    position: relative;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+/* Стили для модальных окон */
+.modal-content {
+    border-radius: 10px;
+}
+
+.modal-header {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+}

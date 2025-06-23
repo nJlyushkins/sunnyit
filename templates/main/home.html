@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Главная{% endblock %}
+{% block extra_css %}
+    <link href="{% static 'main/css/landing.css' %}" rel="stylesheet">
+{% endblock %}
+{% block content %}
+<div class="hero-section text-center py-5">
+    <div class="container">
+        <h1 class="display-4 fw-bold text-accent">SunnyBots</h1>
+        <p class="lead text-muted">Создавайте и управляйте чат-ботами для ВКонтакте за пару кликов!</p>
+        <a href="{% url 'main:login' %}" class="btn btn-accent btn-lg mt-3">Авторизация</a>
+    </div>
+</div>
+
+<div class="features-section py-5">
+    <div class="container">
+        <h2 class="text-center mb-4">Возможности SunnyBots</h2>
+        <div class="row">
+            <div class="col-md-3 text-center feature-card">
+                <i class="bi bi-chat-square-text fs-1 text-white"></i>
+                <h3>Создание ботов</h3>
+                <p>Настройте чат-ботов для ваших групп ВКонтакте с простым интерфейсом.</p>
+            </div>
+            <div class="col-md-3 text-center feature-card">
+                <i class="bi bi-graph-up fs-1 text-white"></i>
+                <h3>Статистика</h3>
+                <p>Отслеживайте активность пользователей и эффективность ботов.</p>
+            </div>
+            <div class="col-md-3 text-center feature-card">
+                <i class="bi bi-gear fs-1 text-white"></i>
+                <h3>Управление</h3>
+                <p>Легко подключайте группы и управляйте всеми ботами в одном месте.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="pricing-section py-5">
+    <div class="container">
+        <h2 class="text-center mb-4">Простая ценовая политика</h2>
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card text-center shadow">
+                    <div class="card-body">
+                        <h3 class="card-title">Чат-бот</h3>
+                        <p class="card-text display-5 text-accent">549 ₽/мес</p>
+                        <p class="text-muted">Полный доступ к функционалу бота для одной группы.</p>
+                        <a href="{% url 'main:register' %}" class="btn btn-accent">Регистрация</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5 text-center">
+    <h2 class="mb-4">Готовы начать?</h2>
+    <p class="text-muted mb-4">Присоединяйтесь к SunnyBots и автоматизируйте общение с вашей аудиторией уже сегодня!</p>
+    <a href="{% url 'main:register' %}" class="btn btn-accent btn-lg">Регистрация</a>
+</div>
+{% endblock %}

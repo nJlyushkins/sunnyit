@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Подключить группу{% endblock %}
+{% block content %}
+<div class="connect-group-section py-5">
+    <div class="container">
+        <h1 class="text-center mb-5 text-accent">Подключить группу ВКонтакте</h1>
+        <!-- Кнопка для открытия первого шага -->
+        <div class="text-center">
+            <button type="button" class="btn btn-accent" data-bs-toggle="modal" data-bs-target="#step1Modal">
+                Подключить группу
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Шаг 1: Ввод ID группы -->
+<div class="modal fade" id="step1Modal" tabindex="-1" aria-labelledby="step1ModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="step1ModalLabel">Шаг 1: Укажите ID группы</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="step1Form">
+                    <div class="mb-3">
+                        <label for="group_id" class="form-label">ID группы или короткий адрес</label>
+                        <input type="text" class="form-control" id="group_id" name="group_id" placeholder="Введите ID или короткий адрес" required>
+                    </div>
+                    <div id="step1Error" class="alert alert-danger d-none"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-accent" onclick="nextStep(1)">Далее</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Шаг 2: Подтверждение группы -->
+<div class="modal fade" id="step2Modal" tabindex="-1" aria-labelledby="step2ModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="step2ModalLabel">Шаг 2: Подтвердите группу</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="groupInfo" class="text-center">
+                    <img id="groupPhoto" src="" alt="Group Photo" class="rounded-circle mb-3" style="width: 100px; height: 100px;">
+                    <h5 id="groupName"></h5>
+                    <p id="groupScreenName"></p>
+                </div>
+                <p class="text-center">Если это та группа, которую вы подключаете, укажите ключ доступа:</p>
+                <form id="step2Form">
+                    <input type="hidden" id="groupId" name="group_id">
+                    <div class="mb-3">
+                        <label for="access_token" class="form-label">Ключ доступа</label>
+                        <input type="text" class="form-control" id="access_token" name="access_token" placeholder="Введите ключ доступа" required>
+                    </div>
+                    <div id="step2Error" class="alert alert-danger d-none"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-accent" onclick="nextStep(2)">Далее</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Шаг 3: Успешное подключение -->
+<div class="modal fade" id="step3Modal" tabindex="-1" aria-labelledby="step3ModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="step3ModalLabel">Группа подключена</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="step3Message" class="alert alert-success text-center">
+                    Группа успешно подключена!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-accent" data-bs-dismiss="modal" onclick="window.location.reload()">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function nextStep(step) {
+    if (step === 1) {
+        const groupIdInput = document.getElementById('group_id').value;
+        if (!groupIdInput) {
+            showError('step1Error', 'Пожалуйста, укажите ID группы');
+            return;
+        }
+
+        fetch('/connect-group/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: `step=1&group_id=${encodeURIComponent(groupIdInput)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showError('step1Error', data.error);
+            } else {
+                document.getElementById('groupPhoto').src = data.photo_100;
+                document.getElementById('groupName').innerText = data.name;
+                document.getElementById('groupScreenName').innerText = data.screen_name;
+                document.getElementById('groupId').value = data.group_id;
+                const step1Modal = bootstrap.Modal.getInstance(document.getElementById('step1Modal'));
+                step1Modal.hide();
+                new bootstrap.Modal(document.getElementById('step2Modal')).show();
+            }
+        })
+        .catch(error => showError('step1Error', 'Произошла ошибка: ' + error));
+    } else if (step === 2) {
+        const groupId = document.getElementById('groupId').value;
+        const accessToken = document.getElementById('access_token').value;
+        if (!accessToken) {
+            showError('step2Error', 'Пожалуйста, укажите ключ доступа');
+            return;
+        }
+
+        fetch('/connect-group/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: `step=2&group_id=${encodeURIComponent(groupId)}&access_token=${encodeURIComponent(accessToken)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showError('step2Error', data.error);
+            } else {
+                document.getElementById('step3Message').innerText = data.success;
+                const step2Modal = bootstrap.Modal.getInstance(document.getElementById('step2Modal'));
+                step2Modal.hide();
+                new bootstrap.Modal(document.getElementById('step3Modal')).show();
+            }
+        })
+        .catch(error => showError('step2Error', 'Произошла ошибка: ' + error));
+    }
+}
+
+function showError(elementId, message) {
+    const errorDiv = document.getElementById(elementId);
+    errorDiv.innerText = message;
+    errorDiv.classList.remove('d-none');
+}
+</script>
+{% endblock %}

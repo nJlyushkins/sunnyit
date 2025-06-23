@@ -1,0 +1,106 @@
+/* Основные цвета */
+:root {
+    --primary-bg: #e3f2fd; /* Основной цвет */
+    --accent: #0d6efd; /* Акцентный цвет */
+    --white: #ffffff; /* Дополнительный цвет */
+}
+
+body {
+    background-color: var(--white);
+}
+
+.hero-section {
+    background: linear-gradient(180deg, var(--primary-bg) 0%, var(--white) 100%);
+    padding-top: 80px;
+}
+
+.features-section {
+    background-color: var(--primary-bg);
+}
+
+.features-section .container .row{
+    gap: 10px;
+    display:flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.feature-card {
+    background-color: var(--accent);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 10px 0;
+    color: var(--white);
+    transition: transform 0.3s;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+    background-color: var(--white);
+    transition: transform 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.btn-accent {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: var(--white);
+}
+
+.btn-accent:hover {
+    background-color: #0b5ed7;
+    border-color: #0b5ed7;
+    color: var(--white);
+}
+
+header {
+    background-color: var(--primary-bg);
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    color: var(--accent) !important;
+}
+
+.nav-link {
+    color: var(--accent) !important;
+}
+
+.nav-link:hover {
+    color: #0b5ed7 !important;
+}
+
+.nav-link.btn {
+    background-color: var(--white);
+    color: var(--accent) !important;
+    border: 1px solid var(--accent);
+    padding: 5px 15px;
+    border-radius: 5px;
+}
+
+.nav-link.btn:hover {
+    background-color: var(--accent);
+    color: var(--white) !important;
+}
+
+.text-accent {
+    color: var(--accent) !important;
+}
+
+.pricing-section {
+    background-color: var(--white);
+}

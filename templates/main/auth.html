@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static crispy_forms_tags %}
+{% block title %}Авторизация{% endblock %}
+{% block extra_css %}
+    <link href="{% static 'main/css/auth.css' %}" rel="stylesheet">
+{% endblock %}
+{% block content %}
+<div class="auth-section py-5">
+    <div class="container">
+        <h1 class="text-center mb-5 text-accent">Авторизация</h1>
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <ul class="nav nav-tabs mb-4" id="authTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab" aria-controls="login" aria-selected="true">Вход</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab" aria-controls="register" aria-selected="false">Регистрация</button>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="authTabContent">
+                            <!-- Форма входа -->
+                            <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
+                                <form method="post" action="{% url 'main:login' %}">
+                                    {% csrf_token %}
+                                    {{ login_form|crispy }}
+                                    <button type="submit" class="btn btn-accent w-100">Войти</button>
+                                </form>
+                            </div>
+                            <!-- Форма регистрации -->
+                            <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
+                                <div class="alert alert-info password-requirements" role="alert">
+                                    <strong>Требования к паролю:</strong>
+                                    <ul>
+                                        <li>Минимум 8 символов</li>
+                                        <li>Хотя бы одна заглавная буква</li>
+                                        <li>Хотя бы одна строчная буква</li>
+                                        <li>Хотя бы одна цифра</li>
+                                        <li>Хотя бы один специальный символ (!@#$%^&*)</li>
+                                    </ul>
+                                </div>
+                                <form method="post" action="{% url 'main:register' %}">
+                                    {% csrf_token %}
+                                    {{ register_form|crispy }}
+                                    <button type="submit" class="btn btn-accent w-100">Зарегистрироваться</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
