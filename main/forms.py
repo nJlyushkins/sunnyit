@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.utils.translation import gettext_lazy as _
-from .models import CustomUser
+from .models import CustomUser, Messages
 import re
 
 
@@ -95,3 +95,8 @@ class CustomUserCreationForm(UserCreationForm):
             raise forms.ValidationError(_("Пароль должен содержать хотя бы один специальный символ (!@#$%^&*)."))
 
         return password1
+
+class MessageForm(forms.ModelForm):
+    class Meta:
+        model = Messages
+        fields = ['text', 'state']

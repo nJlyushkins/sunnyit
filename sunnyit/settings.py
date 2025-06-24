@@ -25,7 +25,7 @@ SECRET_KEY = "django-insecure-91li-@cs4v$r0-g=24p2rqpn5ubus%2mhegc5+yby@+xbi&j&=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['sunnyit.online','www.sunnyit.online','127.0.0.1']
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -120,9 +120,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "/sunnyit/static/"
+STATIC_URL = "/static/"
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_ROOT = os.path.join(PROJECT_DIR, '../static')
+STATIC_ROOT = os.path.join(PROJECT_DIR, 'static')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

@@ -1,12 +1,22 @@
 import logging
+import os
 
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
+import subprocess
+import json
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
+
 from .forms import CustomAuthenticationForm, CustomUserCreationForm
 from .models import UserBalance, CustomUser, VKGroup, ChatBot, ConfirmCode, GroupStatistics, BotStatistics
+from .models import Messages, Media, States
+from .forms import MessageForm
 from .utils import process_vk_event
 from .vk_api import VkServiceApi, VkTokenValidator
 import json
@@ -15,6 +25,8 @@ from datetime import timedelta
 import uuid
 import random
 import string
+
+logger = logging.getLogger(__name__)
 
 def home(request):
     return render(request, 'main/home.html')
@@ -108,6 +120,70 @@ def dashboard(request):
         'bots_data': bots_data,
     }
     return render(request, 'main/dashboard.html', context)
+
+# В файле main/views.py
+import subprocess
+import json
+import os
+import logging
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_GET
+from .models import ChatBot
+
+logger = logging.getLogger(__name__)
+
+# В файле main/views.py
+import subprocess
+import json
+import os
+import logging
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_GET
+from .models import ChatBot
+
+logger = logging.getLogger(__name__)
+
+@require_GET
+@login_required
+def get_bot_data(request, bot_id):
+    bot = ChatBot.objects.get(id=bot_id, vk_group__owner=request.user)
+    bot_path = bot.library_path.rstrip(os.sep)  # Удаляем лишний слеш в конце
+    bot_file = os.path.normpath(os.path.join(bot_path, 'bot.py'))  # Нормализуем путь
+
+    # Отладочная информация
+    logger.debug(f"Bot path: {bot_path}")
+    logger.debug(f"Bot file: {bot_file}")
+
+    if not os.path.exists(bot_file):
+        logger.error(f"Bot file not found at: {bot_file}")
+        return JsonResponse({'success': False, 'error': f'Bot file not found at: {bot_file}'}, status=400)
+
+    action = request.GET.get('action')  # 'get_users', 'get_states', 'get_messages'
+
+    try:
+        result = subprocess.run(
+            ['python', bot_file, action],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=bot_path  # Указываем рабочую директорию
+        )
+        output = result.stdout.strip()
+        if not output:
+            return JsonResponse({'success': False, 'error': 'Empty response from bot.py'}, status=500)
+        data = json.loads(output)
+        return JsonResponse({'success': True, 'data': data})
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Subprocess error for bot {bot_id}: {e.stderr}")
+        return JsonResponse({'success': False, 'error': f'Bot execution failed: {e.stderr}'}, status=500)
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON decode error for bot {bot_id}: {output} - {str(e)}")
+        return JsonResponse({'success': False, 'error': f'Invalid JSON from bot.py: {str(e)}'}, status=500)
+    except Exception as e:
+        logger.error(f"Unexpected error for bot {bot_id}: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @login_required
 def connect_group_ajax(request):
@@ -212,6 +288,146 @@ def connect_group_ajax(request):
                 return JsonResponse({'error': 'Группа не найдена'}, status=400)
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+def edit_messages(request, bot_id):
+    bot = get_object_or_404(ChatBot, id=bot_id, vk_group__owner=request.user)
+    bot_path = bot.library_path.rstrip(os.sep)
+    bot_file = os.path.normpath(os.path.join(bot_path, 'bot.py'))
+
+    if not os.path.exists(bot_file):
+        logger.error(f"Bot file not found at: {bot_file}")
+        return render(request, 'main/edit_messages.html', {'error': 'Bot file not found', 'bot': bot, 'bot_id': bot_id})
+
+    # Получаем сообщения
+    try:
+        result_messages = subprocess.run(
+            ['python', bot_file, 'get_messages'],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=bot_path
+        )
+        messages = json.loads(result_messages.stdout.strip()) if result_messages.stdout.strip() else []
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Subprocess error for bot {bot_id} (get_messages): {e.stderr}")
+        messages = []
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON decode error for bot {bot_id} (get_messages): {e}")
+        messages = []
+
+    # Получаем состояния
+    try:
+        result_states = subprocess.run(
+            ['python', bot_file, 'get_states'],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=bot_path
+        )
+        states = json.loads(result_states.stdout.strip()) if result_states.stdout.strip() else []
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Subprocess error for bot {bot_id} (get_states): {e.stderr}")
+        states = []
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON decode error for bot {bot_id} (get_states): {e}")
+        states = []
+
+    return render(request, 'main/edit_messages.html', {'messages': messages, 'states': states, 'bot': bot, 'bot_id': bot_id})
+
+@require_GET
+@login_required
+def get_message(request, message_id):
+    bot_id = request.GET.get('bot_id')
+    bot = get_object_or_404(ChatBot, id=bot_id, vk_group__owner=request.user)
+    bot_path = bot.library_path.rstrip(os.sep)
+    bot_file = os.path.normpath(os.path.join(bot_path, 'bot.py'))
+
+    if not os.path.exists(bot_file):
+        return JsonResponse({'success': False, 'error': 'Bot file not found'}, status=400)
+
+    try:
+        result = subprocess.run(
+            ['python', bot_file, 'get_message_by_id', str(message_id)],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=bot_path
+        )
+        output = result.stdout.strip()
+        if not output:
+            return JsonResponse({'success': False, 'error': 'Empty response from bot.py'}, status=500)
+        data = json.loads(output)
+        if not data.get('success'):
+            return JsonResponse({'success': False, 'error': data.get('error')}, status=400)
+        return JsonResponse(data)
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Subprocess error for bot {bot_id}: {e.stderr}")
+        return JsonResponse({'success': False, 'error': f'Bot execution failed: {e.stderr}'}, status=500)
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON decode error for bot {bot_id}: {output} - {str(e)}")
+        return JsonResponse({'success': False, 'error': f'Invalid JSON from bot.py: {str(e)}'}, status=500)
+
+def update_message(request, message_id):
+    bot_id = request.POST.get('bot_id')
+    bot = get_object_or_404(ChatBot, id=bot_id, vk_group__owner=request.user)
+    bot_path = bot.library_path.rstrip(os.sep)
+    bot_file = os.path.normpath(os.path.join(bot_path, 'bot.py'))
+
+    if not os.path.exists(bot_file):
+        return JsonResponse({'success': False, 'error': 'Bot file not found'}, status=400)
+
+    if request.method == 'POST':
+        text = request.POST.get('text')
+        state_id = request.POST.get('state_id')
+        media_urls = [request.POST.get(f'media_url_{i}') for i in range(5)]
+        try:
+            result = subprocess.run(
+                ['python', bot_file, 'update_message', str(message_id), text, str(state_id)] + [url for url in media_urls if url],
+                capture_output=True,
+                text=True,
+                check=True,
+                cwd=bot_path
+            )
+            output = json.loads(result.stdout.strip())
+            return JsonResponse(output)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Subprocess error for bot {bot_id}: {e.stderr}")
+            return JsonResponse({'success': False, 'error': f'Bot execution failed: {e.stderr}'}, status=500)
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decode error for bot {bot_id}: {output} - {str(e)}")
+            return JsonResponse({'success': False, 'error': f'Invalid JSON from bot.py: {str(e)}'}, status=500)
+    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
+
+def add_message(request, bot_id):
+    bot = get_object_or_404(ChatBot, id=bot_id, vk_group__owner=request.user)
+    bot_path = bot.library_path.rstrip(os.sep)
+    bot_file = os.path.normpath(os.path.join(bot_path, 'bot.py'))
+
+    if not os.path.exists(bot_file):
+        return JsonResponse({'success': False, 'error': 'Bot file not found'}, status=400)
+
+    if request.method == 'POST':
+        text = request.POST.get('text')
+        state_id = request.POST.get('state_id')
+        media_urls = [request.POST.get(f'media_url_{i}') for i in range(5)]
+        try:
+            result = subprocess.run(
+                ['python', bot_file, 'add_message', text, str(state_id)] + [url for url in media_urls if url],
+                capture_output=True,
+                text=True,
+                check=True,
+                cwd=bot_path
+            )
+            output = json.loads(result.stdout.strip())
+            return JsonResponse(output)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Subprocess error for bot {bot_id}: {e.stderr}")
+            return JsonResponse({'success': False, 'error': f'Bot execution failed: {e.stderr}'}, status=500)
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decode error for bot {bot_id}: {output} - {str(e)}")
+            return JsonResponse({'success': False, 'error': f'Invalid JSON from bot.py: {str(e)}'}, status=500)
+    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
 
 @login_required
 def check_callback_server(request):

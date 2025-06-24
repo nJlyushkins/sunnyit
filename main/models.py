@@ -41,3 +41,26 @@ class BotStatistics(models.Model):
     messages_processed = models.IntegerField(default=0)
     interactions = models.IntegerField(default=0)
     active_users = models.JSONField(default=list)
+
+class States(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
+class Messages(models.Model):
+    bot = models.ForeignKey(ChatBot, on_delete=models.CASCADE)
+    text = models.TextField()
+    state = models.ForeignKey(States, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Message #{self.id} - {self.text[:50]}"
+
+class Media(models.Model):
+    message = models.ForeignKey(Messages, on_delete=models.CASCADE, related_name='media_items')
+    url = models.URLField(max_length=500)
+    type = models.CharField(max_length=50, default='image')  # Например, 'image', 'video'
+
+    def __str__(self):
+        return f"Media for Message #{self.message_id} - {self.url}"

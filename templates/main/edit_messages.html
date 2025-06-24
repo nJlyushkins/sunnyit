@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% block content %}
+<div class="container">
+    <h1>Редактирование сообщений для бота {{ bot.name }}</h1>
+    <p>Количество сообщений: {{ messages|length }}</p> <!-- Отладочная информация -->
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#messageModal" onclick="prepareAddMessage()">Добавить новое сообщение</button>
+    <div style="margin-top:1em" class="row">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="col-md-4">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Сообщение #{{ message.id }}</h5>
+                        <p class="card-text">{{ message.text|truncatewords:10 }}</p>
+                        <p>Состояние: {{ message.state_name|default:'Без состояния' }}</p>
+                        <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#messageModal" onclick="prepareEditMessage({{ message.id }})">Редактировать</button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-warning">Нет сообщений для отображения.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Модальное окно -->
+<div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="messageModalLabel">Редактирование сообщения</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="messageForm">
+                    <input type="hidden" id="messageId" name="message_id">
+                    <input type="hidden" id="botId" name="bot_id" value="{{ bot_id }}">
+                    <div class="mb-3">
+                        <label for="messageText" class="form-label">Текст сообщения</label>
+                        <textarea class="form-control" id="messageText" name="text" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="messageState" class="form-label">Состояние</label>
+                        <select class="form-select" id="messageState" name="state_id">
+                            {% for state in states %}
+                            <option value="{{ state.id }}">{{ state.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div id="mediaInputs">
+                        <h6>Медиа (до 5 штук)</h6>
+                        {% for i in 5|range %}
+                        <div class="mb-2">
+                            <label for="mediaUrl{{ i }}" class="form-label">URL медиа {{ i|add:1 }}</label>
+                            <input type="text" class="form-control" id="mediaUrl{{ i }}" name="media_url_{{ i }}">
+                        </div>
+                        {% endfor %}
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="saveMessage()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function prepareEditMessage(messageId) {
+    fetch(`/get-message/${messageId}/?bot_id={{ bot_id }}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const message = data.data;
+                document.getElementById('messageId').value = message.id;
+                document.getElementById('messageText').value = message.text;
+                document.getElementById('messageState').value = message.state_id;
+                for (let i = 0; i < 5; i++) {
+                    const media = message.media[i] || {};
+                    document.getElementById(`mediaUrl${i}`).value = media.url || '';
+                }
+            } else {
+                alert('Ошибка загрузки сообщения: ' + data.error);
+            }
+        });
+}
+
+function prepareAddMessage() {
+    document.getElementById('messageId').value = '';
+    document.getElementById('messageText').value = '';
+    document.getElementById('messageState').value = '';
+    for (let i = 0; i < 5; i++) {
+        document.getElementById(`mediaUrl${i}`).value = '';
+    }
+}
+
+function saveMessage() {
+    const formData = new FormData(document.getElementById('messageForm'));
+    const messageId = formData.get('message_id');
+    const botId = '{{ bot_id }}';
+    const url = messageId ? `/update-message/${messageId}/` : `/add-message/${botId}/`;
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Ошибка: ' + data.error);
+        }
+    });
+}
+</script>
+{% endblock %}

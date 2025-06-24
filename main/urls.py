@@ -16,5 +16,10 @@ urlpatterns = [
     path('payment/', views.payment, name='payment'),
     path('order-bot/', views.order_bot, name='order_bot'),
     path('vk-callback/', views.vk_callback, name='vk_callback'),
-    path('edit-bot/<int:bot_id>/', views.edit_bot, name='edit_bot'),  # Placeholder for bot editing
+    path('edit-bot/<int:bot_id>/', views.edit_bot, name='edit_bot'),
+    path('edit-messages/<int:bot_id>/', views.edit_messages, name='edit_messages'),
+    path('get-message/<int:message_id>/', views.get_message, name='get_message'),
+    path('update-message/<int:message_id>/', views.update_message, name='update_message'),
+    path('add-message/<int:bot_id>/', views.add_message, name='add_message'),
+    path('get-bot-data/<int:bot_id>/', views.get_bot_data, name='get_bot_data')# Placeholder for bot editing
 ]

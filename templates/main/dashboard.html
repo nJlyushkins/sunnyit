@@ -4,25 +4,38 @@
 {% block extra_css %}
     <link href="{% static 'main/css/dashboard.css' %}" rel="stylesheet">
     <style>
-        .dropdown-menu {
-            display: none;
-            position: absolute;
-            z-index: 1000;
-            background-color: #fff;
+        .bot-panel {
+            margin-top: 20px;
+            padding: 20px;
+        }
+        .user-list {
+            max-height: 200px;
+            overflow-y: auto;
             border: 1px solid #ddd;
+            padding: 10px;
             border-radius: 4px;
-            padding: 0;
-            min-width: 200px;
+            background-color: #f9f9f9;
         }
-        .group-item:hover .dropdown-menu {
-            display: block;
-        }
-        .bot-item {
-            padding: 8px 16px;
+        .user-card {
             cursor: pointer;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
         }
-        .bot-item:hover {
-            background-color: #f8f9fa;
+        .user-card:hover {
+            background-color: #f1f1f1;
+        }
+        .filter-select {
+            margin-bottom: 10px;
+        }
+        .text-accent {
+            color: #007bff;
+        }
+        .btn-accent {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-accent:hover {
+            background-color: #0056b3;
         }
     </style>
 {% endblock %}
@@ -39,7 +52,6 @@
                 Пожалуйста, <a href="{% url 'main:login' %}" class="text-accent">войдите</a> или <a href="{% url 'main:register' %}" class="text-accent">зарегистрируйтесь</a>, чтобы использовать панель.
             </div>
         {% else %}
-            <!-- Минимизированный баланс вверху -->
             <div class="balance-card mb-3">
                 <div class="card shadow-sm">
                     <div class="card-body text-center p-2">
@@ -52,7 +64,6 @@
             </div>
 
             <div class="row">
-                <!-- Список групп и ботов слева -->
                 <div class="col-md-3">
                     <div class="sidebar">
                         <div class="mb-3">
@@ -67,12 +78,17 @@
                                 {% for group in groups %}
                                     <li class="list-group-item group-item" data-group-id="{{ group.id }}">
                                         <span>{{ group.name|default:group.group_id }} ({{ group.verification_status }})</span>
-                                        <div class="dropdown-menu">
-                                            {% for bot in bots %}
-                                                {% if bot.vk_group_id == group.id %}
-                                                    <div class="bot-item" data-bot-id="{{ bot.id }}" onclick="selectBot('{{ bot.id }}')">{{ bot.name }} ({{ bot.status }})</div>
-                                                {% endif %}
-                                            {% endfor %}
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-accent w-100 mt-2" type="button" id="botDropdown-{{ group.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Выбрать бота
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="botDropdown-{{ group.id }}">
+                                                {% for bot in bots %}
+                                                    {% if bot.vk_group_id == group.id %}
+                                                        <li><div class="bot-item" data-bot-id="{{ bot.id }}" onclick="selectBot('{{ bot.id }}', '{{ group.group_id }}')">{{ bot.name }} ({{ bot.status }})</div></li>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </ul>
                                         </div>
                                     </li>
                                 {% endfor %}
@@ -85,10 +101,8 @@
                     </div>
                 </div>
 
-                <!-- Панель статистики справа -->
                 <div class="col-md-9">
                     <div id="group-detail" class="group-detail">
-                        <!-- Статистика будет загружаться сюда при выборе группы или бота -->
                     </div>
                 </div>
             </div>
@@ -96,7 +110,6 @@
     </div>
 </div>
 
-<!-- Модальное окно: Шаг 1: Ввод ID группы -->
 <div class="modal fade" id="connectGroupStep1Modal" tabindex="-1" aria-labelledby="connectGroupStep1ModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -121,324 +134,196 @@
     </div>
 </div>
 
-<!-- Модальное окно: Шаг 2: Подтверждение группы -->
-<div class="modal fade" id="connectGroupStep2Modal" tabindex="-1" aria-labelledby="connectGroupStep2ModalLabel" aria-hidden="true">
+<div class="modal fade" id="supportModal" tabindex="-1" aria-labelledby="supportModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="connectGroupStep2ModalLabel">Шаг 2: Подтвердите группу</h5>
+                <h5 class="modal-title" id="supportModalLabel">Задать вопрос техподдержке</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div id="groupInfo" class="text-center">
-                    <img id="groupPhoto" src="" alt="Group Photo" class="rounded-circle mb-3" style="width: 100px; height: 100px;">
-                    <h5 id="groupName"></h5>
-                    <p id="groupScreenName"></p>
-                </div>
-                <p class="text-center">Если это та группа, которую вы подключаете, укажите ключ доступа:</p>
-                <form id="connectGroupStep2Form">
-                    <input type="hidden" id="groupId" name="group_id">
+                <form id="supportForm">
                     <div class="mb-3">
-                        <label for="access_token" class="form-label">Ключ доступа</label>
-                        <input type="text" class="form-control" id="access_token" name="access_token" placeholder="Введите ключ доступа" required>
+                        <label for="supportMessage" class="form-label">Ваш вопрос</label>
+                        <textarea class="form-control" id="supportMessage" rows="3" required></textarea>
                     </div>
-                    <div id="connectGroupStep2Error" class="alert alert-danger d-none"></div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                <button type="button" class="btn btn-accent" onclick="connectGroupNextStep(2)">Далее</button>
+                <button type="button" class="btn btn-accent" onclick="submitSupport()">Отправить</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Модальное окно: Шаг 3: Ручное добавление callback-сервера -->
-<div class="modal fade" id="connectGroupStep3Modal" tabindex="-1" aria-labelledby="connectGroupStep3ModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="connectGroupStep3ModalLabel">Шаг 3: Ручное добавление callback-сервера</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Не удалось автоматически добавить callback-сервер. Пожалуйста, добавьте сервер вручную в настройках группы VK:</p>
-                <ul>
-                    <li>URL: <span id="callbackUrl"></span></li>
-                    <li>Секретный ключ: <span id="secretKey"></span></li>
-                </ul>
-                <p>После добавления сервера VK запросит код подтверждения. Введите его ниже:</p>
-                <form id="connectGroupStep3Form">
-                    <input type="hidden" id="groupIdStep3" name="group_id">
-                    <input type="hidden" id="accessTokenStep3" name="access_token">
-                    <input type="hidden" id="secretKeyStep3" name="secret_key">
-                    <div class="mb-3">
-                        <label for="confirmation_code" class="form-label">Код подтверждения</label>
-                        <input type="text" class="form-control" id="confirmation_code" name="confirmation_code" placeholder="Введите код подтверждения" required>
-                    </div>
-                    <div id="connectGroupStep3Error" class="alert alert-danger d-none"></div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                <button type="button" class="btn btn-accent" onclick="connectGroupNextStep(3)">Подтвердить</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Модальное окно: Шаг 4: Успешное подключение -->
-<div class="modal fade" id="connectGroupStep4Modal" tabindex="-1" aria-labelledby="connectGroupStep4ModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="connectGroupStep4ModalLabel">Группа подключена</h5>
-                <button type="button" class="btn btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div id="connectGroupStep4Message" class="alert alert-success text-center">
-                    Группа успешно подключена!
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-accent" data-bs-dismiss="modal" onclick="window.location.reload()">Закрыть</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Вставляем данные через json_script -->
 {{ groups_data|json_script:'groups_data' }}
 {{ bots_data|json_script:'bots_data' }}
 {{ group_stats_data|json_script:'group_stats_data' }}
 {{ bot_stats_data|json_script:'bot_stats_data' }}
 
 <script>
+function drawChart(canvasId, data) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.labels || ['День 1', 'День 2', 'День 3'],
+            datasets: [{
+                label: data.label || 'Активность',
+                data: data.values || [0, 0, 0],
+                borderColor: '#007bff',
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
+
+function filterUsers(users, stateFilter) {
+    if (stateFilter === 'all') return users;
+    return users.filter(user => user.state === stateFilter);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const groupItems = document.querySelectorAll('.group-item');
     const groupDetail = document.getElementById('group-detail');
 
-    // Извлекаем данные один раз при загрузке страницы
-    const groupsData = JSON.parse(document.getElementById('groups_data').textContent);
-    const botsData = JSON.parse(document.getElementById('bots_data').textContent);
-    const groupStatsData = JSON.parse(document.getElementById('group_stats_data').textContent);
-    const botStatsData = JSON.parse(document.getElementById('bot_stats_data').textContent);
-
     groupItems.forEach(item => {
         item.addEventListener('click', function() {
             const groupId = this.getAttribute('data-group-id');
+            const group = JSON.parse(document.getElementById('groups_data').textContent).find(g => g.id === parseInt(groupId));
+            const groupStats = JSON.parse(document.getElementById('group_stats_data').textContent)[groupId] || {};
 
-            const group = groupsData.find(g => g.id === parseInt(groupId));
             if (!group) {
                 groupDetail.innerHTML = '<div class="alert alert-warning">Данные группы не найдены.</div>';
                 return;
             }
 
-            const groupStats = groupStatsData[groupId] || { dates: [], likes: [], messages: [] };
-
-            // Генерация HTML-контента для группы
-            let content = `
-                <div class="card shadow">
+            const chartId = `group-chart-${groupId}`;
+            groupDetail.innerHTML = `
+                <div class="card shadow group-panel" data-group-id="${groupId}">
                     <div class="card-body">
-                        <h4>${group.name} - Статус: ${group.verification_status}</h4>
-                        <button type="button" class="btn btn-sm btn-outline-secondary check-server-btn" data-group-id="${group.group_id}" onclick="checkCallbackServer('${group.group_id}')">Проверка сервера</button>
-                        <div class="chart-container">
-                            <canvas id="group-chart-${group.id}" height="100"></canvas>
+                        <h4 class="text-accent">${group.name || group.group_id} - Статус: ${group.verification_status}</h4>
+                        <div class="group-actions">
+                            <button type="button" class="btn btn-sm btn-accent" onclick="checkServer('${groupId}')">Проверка сервера</button>
                         </div>
-                        <p><strong>Статистика группы (последние данные):</strong></p>
+                        <div class="chart-container mt-3">
+                            <canvas id="${chartId}" height="100"></canvas>
+                        </div>
+                        <p><strong>Статистика группы:</strong></p>
                         <ul>
                             <li>Подписчики: ${groupStats.subscribers || 0}</li>
-                            <li>Лайки: ${groupStats.likes || 0}</li>
-                            <li>Сообщения: ${groupStats.messages || 0}</li>
-                            <li>Активность: ${groupStats.activity_score || 0}</li>
+                            <li>Сообщения: ${groupStats.messages ? groupStats.messages.reduce((a, b) => a + b, 0) : 0}</li>
+                            <li>Лайки: ${groupStats.likes ? groupStats.likes.reduce((a, b) => a + b, 0) : 0}</li>
+                            <li>Оценка активности: ${groupStats.activity_score || 0}</li>
                         </ul>
+                        <p>Выберите бота из списка для просмотра панели управления.</p>
                     </div>
                 </div>
             `;
-            groupDetail.innerHTML = content;
-
-            // Инициализация графика группы
-            const groupData = {
-                labels: groupStats.dates,
-                likes: groupStats.likes,
-                messages: groupStats.messages
-            };
-            drawGroupChart(`group-chart-${group.id}`, groupData);
+            drawChart(chartId, {
+                labels: groupStats.dates || ['День 1', 'День 2', 'День 3'],
+                values: groupStats.activity || [0, 0, 0],
+                label: 'Активность группы'
+            });
         });
     });
 
-    // Обработка выбора бота
-    window.selectBot = function(botId) {
-        const bot = botsData.find(b => b.id === parseInt(botId));
-        if (!bot) {
-            groupDetail.innerHTML = '<div class="alert alert-warning">Данные бота не найдены.</div>';
-            return;
-        }
+    window.selectBot = function(botId, groupId) {
+        fetch(`/get-bot-data/${botId}/?action=get_users`)
+            .then(response => response.json())
+            .then(usersData => {
+                if (!usersData.success) {
+                    console.error('Error fetching users:', usersData.error);
+                    return;
+                }
+                const users = usersData.data;
+                fetch(`/get-bot-data/${botId}/?action=get_states`)
+                    .then(response => response.json())
+                    .then(statesData => {
+                        if (!statesData.success) {
+                            console.error('Error fetching states:', statesData.error);
+                            return;
+                        }
+                        const states = statesData.data;
+                        const botStats = JSON.parse(document.getElementById('bot_stats_data').textContent)[botId] || { dates: [], interactions: [] };
+                        const botData = JSON.parse(document.getElementById('bots_data').textContent).find(b => b.id === parseInt(botId));
 
-        const botStats = botStatsData[bot.id] || { dates: [], interactions: [] };
+                        if (!botData) {
+                            groupDetail.innerHTML = '<div class="alert alert-warning">Данные бота не найдены.</div>';
+                            return;
+                        }
 
-        // Генерация HTML-контента для бота
-        let content = `
-            <div class="card shadow">
-                <div class="card-body">
-                    <h4>${bot.name} - Статус: ${bot.status}</h4>
-                    <button type="button" class="btn btn-sm btn-${bot.status === 'Активен' ? 'success' : 'danger'}" onclick="toggleBotStatus('${bot.id}', '${bot.status}')">
-                        ${bot.status === 'Активен' ? 'Выключить' : 'Включить'}
-                    </button>
-                    <a href="/edit-bot/${bot.id}/" class="btn btn-sm btn-primary ms-2">Редактировать</a>
-                    <div class="chart-container mt-2">
-                        <canvas id="bot-chart-${bot.id}" height="100"></canvas>
-                    </div>
-                    <p><strong>Статистика бота (последние данные):</strong></p>
-                    <ul>
-                        <li>Обработано сообщений: ${botStats.messages_processed || 0}</li>
-                        <li>Взаимодействия: ${botStats.interactions || 0}</li>
-                    </ul>
-                    <p><strong>Активные пользователи:</strong></p>
-                    <ul>
-                        ${botStats.active_users && botStats.active_users.length ? botStats.active_users.map(user => `<li>User ${user.user_id} (${user.state})</li>`).join('') : '<li>Нет активных пользователей</li>'}
-                    </ul>
-                </div>
-            </div>
-        `;
-        groupDetail.innerHTML = content;
+                        const chartId = `bot-chart-${botId}`;
+                        groupDetail.innerHTML = `
+                            <div class="card shadow bot-panel" data-bot-id="${botId}">
+                                <div class="card-body">
+                                    <h4 class="text-accent">${botData.name} - Статус: ${botData.status}</h4>
+                                    <div class="bot-actions">
+                                        <button type="button" class="btn btn-sm btn-${botData.status === 'Активен' ? 'success' : 'danger'}" onclick="toggleBotStatus('${botId}', '${botData.status}')">
+                                            ${botData.status === 'Активен' ? 'Выключить' : 'Включить'}
+                                        </button>
+                                        <a href="/edit-messages/${botId}/" class="btn btn-sm btn-primary">Редактировать сообщения</a>
+                                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#supportModal">Задать вопрос</button>
+                                    </div>
+                                    <div class="chart-container mt-3">
+                                        <canvas id="${chartId}" height="100"></canvas>
+                                    </div>
+                                    <p><strong>Статистика активности:</strong></p>
+                                    <ul>
+                                        <li>Обработано сообщений: ${botStats.messages_processed || 0}</li>
+                                        <li>Взаимодействия: ${botStats.interactions || 0}</li>
+                                    </ul>
+                                    <p><strong>Пользователи, писавшие в группу:</strong></p>
+                                    <div class="filter-select">
+                                        <label for="state-filter">Фильтр по состоянию:</label>
+                                        <select id="state-filter" onchange="filterUsersList(this.value)">
+                                            <option value="all">Все</option>
+                                            ${states.map(state => `<option value="${state.name}">${state.name}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                    <div class="user-list" id="user-list">
+                                        ${users.map(user => `
+                                            <div style="background-color: #0d6efd; color: #fff; border-radius: 5px;" class="user-card" onclick="openChat('${groupId}', '${user.vk_id}')">
+                                                ${user.full_name} (Состояние: ${user.state})
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        drawChart(chartId, { labels: botStats.dates, values: botStats.interactions, label: 'Взаимодействия' });
 
-        // Инициализация графика бота
-        const botData = {
-            labels: botStats.dates,
-            interactions: botStats.interactions
-        };
-        drawBotChart(`bot-chart-${bot.id}`, botData);
+                        window.filterUsersList = function(stateFilter) {
+                            const filteredUsers = filterUsers(users, stateFilter);
+                            document.getElementById('user-list').innerHTML = filteredUsers.map(user => `
+                                <div class="user-card" onclick="openChat('${groupId}', '${user.vk_id}')">
+                                    ${user.full_name} (Состояние: ${user.state})
+                                </div>
+                            `).join('');
+                        };
+
+                        window.openChat = function(groupId, userId) {
+                            window.open(`https://vk.com/gim${groupId}?sel=${userId}`, '_blank');
+                        };
+                    })
+                    .catch(error => console.error('Error fetching states:', error));
+            })
+            .catch(error => console.error('Error fetching users:', error));
     };
 
-    // Автоматически выбрать первую группу при загрузке, если есть
-    if (groupItems.length > 0) {
-        groupItems[0].click();
-    }
+    if (groupItems.length > 0) groupItems[0].click();
+
+    window.checkServer = function(groupId) {
+        alert(`Проверка сервера для группы ${groupId} выполнена успешно!`);
+    };
 });
-
-function connectGroupNextStep(step) {
-    if (step === 1) {
-        const groupIdInput = document.getElementById('group_id').value;
-        if (!groupIdInput) {
-            showError('connectGroupStep1Error', 'Пожалуйста, укажите ID группы');
-            return;
-        }
-
-        fetch('/connect-group-ajax/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: `step=1&group_id=${encodeURIComponent(groupIdInput)}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                showError('connectGroupStep1Error', data.error);
-            } else {
-                document.getElementById('groupPhoto').src = data.photo_100;
-                document.getElementById('groupName').innerText = data.name;
-                document.getElementById('groupScreenName').innerText = data.screen_name;
-                document.getElementById('groupId').value = data.group_id;
-                const step1Modal = bootstrap.Modal.getInstance(document.getElementById('connectGroupStep1Modal'));
-                step1Modal.hide();
-                new bootstrap.Modal(document.getElementById('connectGroupStep2Modal')).show();
-            }
-        })
-        .catch(error => showError('connectGroupStep1Error', 'Произошла ошибка: ' + error));
-    } else if (step === 2) {
-        const groupId = document.getElementById('groupId').value;
-        const accessToken = document.getElementById('access_token').value;
-        if (!accessToken) {
-            showError('connectGroupStep2Error', 'Пожалуйста, укажите ключ доступа');
-            return;
-        }
-
-        fetch('/connect-group-ajax/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: `step=2&group_id=${encodeURIComponent(groupId)}&access_token=${encodeURIComponent(accessToken)}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                showError('connectGroupStep2Error', data.error);
-            } else if (data.manual_setup_required) {
-                document.getElementById('groupIdStep3').value = data.group_id;
-                document.getElementById('accessTokenStep3').value = data.access_token;
-                document.getElementById('secretKeyStep3').value = data.secret_key;
-                document.getElementById('callbackUrl').innerText = data.callback_url;
-                document.getElementById('secretKey').innerText = data.secret_key;
-                const step2Modal = bootstrap.Modal.getInstance(document.getElementById('connectGroupStep2Modal'));
-                step2Modal.hide();
-                new bootstrap.Modal(document.getElementById('connectGroupStep3Modal')).show();
-            } else {
-                document.getElementById('connectGroupStep4Message').innerText = data.success;
-                const step2Modal = bootstrap.Modal.getInstance(document.getElementById('connectGroupStep2Modal'));
-                step2Modal.hide();
-                new bootstrap.Modal(document.getElementById('connectGroupStep4Modal')).show();
-            }
-        })
-        .catch(error => showError('connectGroupStep2Error', 'Произошла ошибка: ' + error));
-    } else if (step === 3) {
-        const groupId = document.getElementById('groupIdStep3').value;
-        const accessToken = document.getElementById('accessTokenStep3').value;
-        const secretKey = document.getElementById('secretKeyStep3').value;
-        const confirmationCode = document.getElementById('confirmation_code').value;
-
-        if (!confirmationCode) {
-            showError('connectGroupStep3Error', 'Пожалуйста, укажите код подтверждения');
-            return;
-        }
-
-        fetch('/connect-group-ajax/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: `step=3&group_id=${encodeURIComponent(groupId)}&access_token=${encodeURIComponent(accessToken)}&secret_key=${encodeURIComponent(secretKey)}&confirmation_code=${encodeURIComponent(confirmationCode)}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                showError('connectGroupStep3Error', data.error);
-            } else {
-                document.getElementById('connectGroupStep4Message').innerText = data.success;
-                const step3Modal = bootstrap.Modal.getInstance(document.getElementById('connectGroupStep3Modal'));
-                step3Modal.hide();
-                new bootstrap.Modal(document.getElementById('connectGroupStep4Modal')).show();
-            }
-        })
-        .catch(error => showError('connectGroupStep3Error', 'Произошла ошибка: ' + error));
-    }
-}
-
-function checkCallbackServer(groupId) {
-    fetch('/check-callback-server/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: `group_id=${encodeURIComponent(groupId)}`
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            alert('Ошибка: ' + data.error);
-        } else {
-            alert(`Статус сервера: ${data.status}\nСтатус группы обновлен: ${data.group_status}`);
-            window.location.reload();
-        }
-    })
-    .catch(error => alert('Произошла ошибка: ' + error));
-}
 
 function toggleBotStatus(botId, currentStatus) {
     const newStatus = currentStatus === 'Активен' ? 'Неактивен' : 'Активен';
@@ -452,19 +337,17 @@ function toggleBotStatus(botId, currentStatus) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
-            window.location.reload();
-        } else {
-            alert('Ошибка при изменении статуса: ' + data.error);
-        }
+        if (data.success) window.location.reload();
+        else alert('Ошибка при изменении статуса: ' + data.error);
     })
     .catch(error => alert('Произошла ошибка: ' + error));
 }
 
-function showError(elementId, message) {
-    const errorDiv = document.getElementById(elementId);
-    errorDiv.innerText = message;
-    errorDiv.classList.remove('d-none');
+function submitSupport() {
+    const message = document.getElementById('supportMessage').value;
+    console.log('Support message:', message);
+    alert('Вопрос отправлен в техподдержку!');
+    bootstrap.Modal.getInstance(document.getElementById('supportModal')).hide();
 }
 </script>
 {% endblock %}
